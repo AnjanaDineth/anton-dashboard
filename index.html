@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PNR 500 — Penetration Test Intelligence Dashboard</title>
+<title>PNR 500 — Lab Quality Monitor</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Sora:wght@400;500;600&display=swap" rel="stylesheet">
@@ -88,12 +88,33 @@
     margin-bottom: 2rem;
     padding-bottom: 1.25rem;
     border-bottom: 0.5px solid var(--border-strong);
+    gap: 16px;
+  }
+  .header-logo-block {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+  }
+  .powered-by {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    white-space: nowrap;
+  }
+  .header-logo {
+    height: 52px;
+    width: auto;
+    flex-shrink: 0;
+    filter: invert(1) brightness(0.2);
+  }
+  @media (prefers-color-scheme: dark) {
+    .header-logo { filter: none; }
   }
   .header-left h1 { font-size: 22px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px; }
-  .header-left p { font-size: 13px; color: var(--text-tertiary); }
-  .header-right { text-align: right; }
-  .header-right .device { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text-tertiary); }
-  .header-right .period { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+  .header-left p { font-size: 13px; color: var(--text-tertiary); margin-bottom: 2px; }
+  .header-meta { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 6px; }
+  .header-meta .device { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text-tertiary); }
+  .header-meta .period { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text-secondary); }
 
   .section-label {
     font-size: 10px; font-weight: 500; letter-spacing: 0.12em;
@@ -130,7 +151,7 @@
     .two-col, .three-col { grid-template-columns: 1fr; }
     body { padding: 1rem; }
     .header-bar { flex-direction: column; gap: 12px; }
-    .header-right { text-align: left; }
+    .header-logo { height: 28px; }
   }
 
   .flag-table { width: 100%; border-collapse: collapse; font-size: 12px; }
@@ -233,12 +254,16 @@
 
   <div class="header-bar">
     <div class="header-left">
-      <h1>PNR 500 &mdash; Penetration Test Intelligence</h1>
+      <h1>PNR 500 &mdash; Lab Quality Monitor</h1>
       <p>Anton Paar Automatic Penetrometer &middot; Multi-material QC dataset &middot; Hypothetical data</p>
+      <div class="header-meta">
+        <span class="device">Anton Paar PNR 500 &middot; Serial #AP-PNR-2025</span>
+        <span class="period">Jan 06 &ndash; Jan 31, 2025 &middot; 50 tests</span>
+      </div>
     </div>
-    <div class="header-right">
-      <div class="device">Anton Paar PNR 500 &middot; Serial #AP-PNR-2025</div>
-      <div class="period">Jan 06 &ndash; Jan 31, 2025 &middot; 50 tests</div>
+    <div class="header-logo-block">
+      <span class="powered-by">powered by</span>
+      <img src="Hyperglade-Logo-White.png" alt="Hyperglade" class="header-logo">
     </div>
   </div>
 
@@ -276,23 +301,21 @@
       <div class="kpi-value">1</div>
       <div class="kpi-sub">PNR-028: 1 of 3 required</div>
     </div>
-    <div class="kpi warn">
+    <div class="kpi good">
       <div class="kpi-label">Method variants</div>
-      <div class="kpi-value">4</div>
-      <div class="kpi-sub">"D-217", "USP915", etc.</div>
+      <div class="kpi-value">0</div>
+      <div class="kpi-sub">All entries from dropdown</div>
     </div>
     <div class="kpi danger">
       <div class="kpi-label">Flagged records</div>
-      <div class="kpi-value">11</div>
-      <div class="kpi-sub">22% of dataset has issues</div>
+      <div class="kpi-value">9</div>
+      <div class="kpi-sub">18% of dataset has issues</div>
     </div>
   </div>
 
   <!-- TOP INSIGHT BAR -->
   <div class="insight-box">
-    <strong>Key signal:</strong> OPR-B drives 5 of 11 flagged records (45%) despite running only 24% of tests.
-    All 3 missing-batch incidents and both high-temp deviations (PNR-003, PNR-030) are OPR-B.
-    OPR-A accounts for both probe mismatches — one confirmed (PNR-017), one INVALID (PNR-037 via OPR-D).
+    <strong>Key signal:</strong> OPR-B accounts for 4 of 9 flagged records (44%) despite running only 24% of tests &mdash; both missing-batch incidents (PNR-015, PNR-043) and both high-temp deviations (PNR-003, PNR-030) originate from OPR-B. Probe mismatches on PNR-017 (OPR-A) and PNR-037 (OPR-D) each invalidated a test run.
   </div>
 
   <hr class="divider">
@@ -311,14 +334,12 @@
         <tr><td class="mono">PNR-003</td><td><span class="badge badge-amber">Temp deviation</span></td><td>Bitumen 60/70</td><td>OPR-B</td><td>Actual 27.4&deg;C vs set 25.0&deg;C (+2.4&deg;C)</td><td><span class="badge badge-red">FAIL</span></td></tr>
         <tr><td class="mono">PNR-015</td><td><span class="badge badge-red">Missing batch</span></td><td>Zinc Cream</td><td>OPR-B</td><td>Batch number field empty</td><td><span class="badge badge-green">PASS</span></td></tr>
         <tr><td class="mono">PNR-017</td><td><span class="badge badge-red">Probe mismatch</span></td><td>Bitumen 60/70</td><td>OPR-A</td><td>Grease cone used &mdash; standard requires Bitumen Needle</td><td><span class="badge badge-red">FAIL</span></td></tr>
-        <tr><td class="mono">PNR-019</td><td><span class="badge badge-amber">Method name</span></td><td>EP2 Grease</td><td>OPR-C</td><td>"D-217" should be "ASTM D217"</td><td><span class="badge badge-green">PASS</span></td></tr>
         <tr><td class="mono">PNR-020</td><td><span class="badge badge-amber">Temp deviation</span></td><td>Lidocaine Gel</td><td>OPR-B</td><td>Actual 19.5&deg;C vs set 20.0&deg;C (&minus;0.5&deg;C) &middot; gel too stiff</td><td><span class="badge badge-red">FAIL</span></td></tr>
         <tr><td class="mono">PNR-028</td><td><span class="badge badge-red">Incomplete rep. + Missing batch</span></td><td>Vaseline</td><td>OPR-D</td><td>Only 1 of 3 replicates recorded &middot; batch number empty</td><td><span class="badge badge-amber">INVALID</span></td></tr>
         <tr><td class="mono">PNR-030</td><td><span class="badge badge-amber">Temp deviation</span></td><td>Bitumen 60/70</td><td>OPR-B</td><td>Actual 28.1&deg;C vs set 25.0&deg;C (+3.1&deg;C) &mdash; thermal drift</td><td><span class="badge badge-red">FAIL</span></td></tr>
         <tr><td class="mono">PNR-033</td><td><span class="badge badge-amber">Temp deviation</span></td><td>Margarine</td><td>OPR-C</td><td>Actual 14.5&deg;C vs set 15.0&deg;C (&minus;0.5&deg;C)</td><td><span class="badge badge-green">PASS</span></td></tr>
         <tr><td class="mono">PNR-037</td><td><span class="badge badge-red">Probe mismatch</span></td><td>Lidocaine Gel</td><td>OPR-D</td><td>Pharma Cone used &mdash; Ph.Eur.2.9.9 requires Needle</td><td><span class="badge badge-amber">INVALID</span></td></tr>
-        <tr><td class="mono">PNR-043</td><td><span class="badge badge-red">Missing batch + Method name</span></td><td>Zinc Cream</td><td>OPR-B</td><td>Batch empty &middot; "USP915" vs "USP 915" &middot; OOS unflagged in notes</td><td><span class="badge badge-red">FAIL</span></td></tr>
-        <tr><td class="mono">PNR-028</td><td><span class="badge badge-amber">Method name</span></td><td>Vaseline</td><td>OPR-D</td><td>"Ph.Eur 2.9.9" missing period vs canonical "Ph.Eur.2.9.9"</td><td><span class="badge badge-amber">INVALID</span></td></tr>
+        <tr><td class="mono">PNR-043</td><td><span class="badge badge-red">Missing batch</span></td><td>Zinc Cream</td><td>OPR-B</td><td>Batch number field empty &middot; result OOS unflagged in operator notes</td><td><span class="badge badge-red">FAIL</span></td></tr>
       </tbody>
     </table>
   </div>
@@ -458,7 +479,6 @@
       </div>
     </div>
     <div class="panel">
-      <p class="section-title">Pass tests near spec boundary (&lt;5 mm)</p>
       <table class="flag-table">
         <thead>
           <tr><th>Test ID</th><th>Material</th><th>Mean (mm)</th><th>Limit</th><th>Margin</th></tr>
@@ -557,31 +577,6 @@
     </div>
   </div>
 
-  <hr class="divider">
-
-  <!-- METHOD NORMALIZATION (original) -->
-  <p class="section-label">Method name normalization &mdash; detected variants</p>
-  <div class="panel" style="margin-bottom:2rem;">
-    <table class="flag-table">
-      <thead>
-        <tr><th>Raw value in dataset</th><th>Canonical form</th><th>Records</th><th>Status</th></tr>
-      </thead>
-      <tbody>
-        <tr><td class="mono">ASTM D5</td>     <td class="mono">ASTM D5</td>      <td>16</td><td><span class="badge badge-green">OK</span></td></tr>
-        <tr><td class="mono">EN 1426</td>      <td class="mono">EN 1426</td>      <td>1</td> <td><span class="badge badge-green">OK</span></td></tr>
-        <tr><td class="mono">ASTM D217</td>   <td class="mono">ASTM D217</td>    <td>10</td><td><span class="badge badge-green">OK</span></td></tr>
-        <tr><td class="mono">D-217</td>        <td class="mono">ASTM D217</td>    <td>1</td> <td><span class="badge badge-amber">Normalize</span></td></tr>
-        <tr><td class="mono">ISO 2137</td>     <td class="mono">ISO 2137</td>     <td>1</td> <td><span class="badge badge-green">OK</span></td></tr>
-        <tr><td class="mono">Ph.Eur.2.9.9</td><td class="mono">Ph.Eur.2.9.9</td><td>5</td> <td><span class="badge badge-green">OK</span></td></tr>
-        <tr><td class="mono">Ph.Eur 2.9.9</td><td class="mono">Ph.Eur.2.9.9</td><td>1</td> <td><span class="badge badge-amber">Normalize</span></td></tr>
-        <tr><td class="mono">USP 915</td>      <td class="mono">USP 915</td>      <td>2</td> <td><span class="badge badge-green">OK</span></td></tr>
-        <tr><td class="mono">USP915</td>       <td class="mono">USP 915</td>      <td>1</td> <td><span class="badge badge-amber">Normalize</span></td></tr>
-        <tr><td class="mono">ASTM D1321</td>   <td class="mono">ASTM D1321</td>   <td>3</td> <td><span class="badge badge-green">OK</span></td></tr>
-        <tr><td class="mono">AOCS Cc 16-60</td><td class="mono">AOCS Cc 16-60</td><td>4</td><td><span class="badge badge-green">OK</span></td></tr>
-        <tr><td class="mono">AOCS Cc16-60</td> <td class="mono">AOCS Cc 16-60</td><td>1</td><td><span class="badge badge-amber">Normalize</span></td></tr>
-      </tbody>
-    </table>
-  </div>
 
 </div>
 
@@ -606,7 +601,7 @@ const DATA = [
   {id:'PNR-016',date:'2025-01-14',op:'OPR-D',mat:'Butter Block',mtype:'Food',probe:'Butter Cone',std:'AOCS Cc 16-60',tSet:15,tAct:15.1,tDev:0.1,r1:110.0,r2:108.5,r3:109.2,mean:109.23,sMin:95,sMax:130,result:'PASS'},
   {id:'PNR-017',date:'2025-01-15',op:'OPR-A',mat:'Bitumen 60/70',mtype:'Bitumen',probe:'Grease Cone',std:'ASTM D5',tSet:25,tAct:25.0,tDev:0.0,r1:58.2,r2:57.9,r3:58.5,mean:58.2,sMin:60,sMax:70,result:'FAIL'},
   {id:'PNR-018',date:'2025-01-15',op:'OPR-A',mat:'Bitumen 60/70',mtype:'Bitumen',probe:'Bitumen Needle',std:'ASTM D5',tSet:25,tAct:25.0,tDev:0.0,r1:65.4,r2:65.0,r3:65.7,mean:65.37,sMin:60,sMax:70,result:'PASS'},
-  {id:'PNR-019',date:'2025-01-15',op:'OPR-C',mat:'EP2 Grease',mtype:'Grease',probe:'Grease Cone',std:'D-217',tSet:25,tAct:25.0,tDev:0.0,r1:277.4,r2:278.0,r3:276.9,mean:277.43,sMin:265,sMax:295,result:'PASS'},
+  {id:'PNR-019',date:'2025-01-15',op:'OPR-C',mat:'EP2 Grease',mtype:'Grease',probe:'Grease Cone',std:'ASTM D217',tSet:25,tAct:25.0,tDev:0.0,r1:277.4,r2:278.0,r3:276.9,mean:277.43,sMin:265,sMax:295,result:'PASS'},
   {id:'PNR-020',date:'2025-01-16',op:'OPR-B',mat:'Lidocaine Gel',mtype:'Pharma',probe:'Pharma Needle',std:'Ph.Eur.2.9.9',tSet:20,tAct:19.5,tDev:-0.5,r1:26.1,r2:26.3,r3:25.9,mean:26.1,sMin:18,sMax:28,result:'FAIL'},
   {id:'PNR-021',date:'2025-01-16',op:'OPR-C',mat:'Butter Block',mtype:'Food',probe:'Butter Cone',std:'AOCS Cc 16-60',tSet:15,tAct:15.0,tDev:0.0,r1:115.0,r2:114.5,r3:115.8,mean:115.1,sMin:95,sMax:130,result:'PASS'},
   {id:'PNR-022',date:'2025-01-17',op:'OPR-A',mat:'EP2 Grease',mtype:'Grease',probe:'Grease Cone',std:'ASTM D217',tSet:25,tAct:25.0,tDev:0.0,r1:268.0,r2:267.5,r3:268.8,mean:268.1,sMin:265,sMax:295,result:'PASS'},
@@ -615,7 +610,7 @@ const DATA = [
   {id:'PNR-025',date:'2025-01-20',op:'OPR-A',mat:'Bitumen 60/70',mtype:'Bitumen',probe:'Bitumen Needle',std:'ASTM D5',tSet:25,tAct:25.0,tDev:0.0,r1:70.8,r2:70.5,r3:71.2,mean:70.83,sMin:60,sMax:70,result:'FAIL'},
   {id:'PNR-026',date:'2025-01-20',op:'OPR-B',mat:'Paraffin Wax',mtype:'Wax',probe:'Needle',std:'ASTM D1321',tSet:25,tAct:25.0,tDev:0.0,r1:14.8,r2:14.5,r3:15.1,mean:14.8,sMin:10,sMax:20,result:'PASS'},
   {id:'PNR-027',date:'2025-01-21',op:'OPR-C',mat:'EP3 Grease',mtype:'Grease',probe:'Grease Cone',std:'ISO 2137',tSet:25,tAct:25.0,tDev:0.0,r1:238.0,r2:237.5,r3:238.8,mean:238.1,sMin:220,sMax:250,result:'PASS'},
-  {id:'PNR-028',date:'2025-01-21',op:'OPR-D',mat:'Vaseline',mtype:'Pharma',probe:'Pharma Needle',std:'Ph.Eur 2.9.9',tSet:25,tAct:25.0,tDev:0.0,r1:48.5,r2:null,r3:null,mean:48.5,sMin:45,sMax:60,result:'INVALID'},
+  {id:'PNR-028',date:'2025-01-21',op:'OPR-D',mat:'Vaseline',mtype:'Pharma',probe:'Pharma Needle',std:'Ph.Eur.2.9.9',tSet:25,tAct:25.0,tDev:0.0,r1:48.5,r2:null,r3:null,mean:48.5,sMin:45,sMax:60,result:'INVALID'},
   {id:'PNR-029',date:'2025-01-21',op:'OPR-A',mat:'EP0 Grease',mtype:'Grease',probe:'Grease Cone',std:'ASTM D217',tSet:25,tAct:25.0,tDev:0.0,r1:362.0,r2:361.5,r3:362.8,mean:362.1,sMin:355,sMax:385,result:'PASS'},
   {id:'PNR-030',date:'2025-01-22',op:'OPR-B',mat:'Bitumen 60/70',mtype:'Bitumen',probe:'Bitumen Needle',std:'ASTM D5',tSet:25,tAct:28.1,tDev:3.1,r1:78.5,r2:78.0,r3:78.4,mean:78.3,sMin:60,sMax:70,result:'FAIL'},
   {id:'PNR-031',date:'2025-01-22',op:'OPR-B',mat:'Bitumen 60/70',mtype:'Bitumen',probe:'Bitumen Needle',std:'ASTM D5',tSet:25,tAct:25.0,tDev:0.0,r1:66.5,r2:66.0,r3:66.8,mean:66.43,sMin:60,sMax:70,result:'PASS'},
@@ -630,7 +625,7 @@ const DATA = [
   {id:'PNR-040',date:'2025-01-28',op:'OPR-C',mat:'Bitumen 60/70',mtype:'Bitumen',probe:'Bitumen Needle',std:'ASTM D5',tSet:25,tAct:25.0,tDev:0.0,r1:69.8,r2:70.1,r3:69.5,mean:69.8,sMin:60,sMax:70,result:'PASS'},
   {id:'PNR-041',date:'2025-01-28',op:'OPR-A',mat:'EP2 Grease',mtype:'Grease',probe:'Grease Cone',std:'ASTM D217',tSet:25,tAct:25.0,tDev:0.0,r1:285.0,r2:284.5,r3:285.5,mean:285.0,sMin:265,sMax:295,result:'PASS'},
   {id:'PNR-042',date:'2025-01-29',op:'OPR-B',mat:'Zinc Cream',mtype:'Pharma',probe:'Pharma Needle',std:'USP 915',tSet:25,tAct:25.0,tDev:0.0,r1:28.3,r2:28.0,r3:28.6,mean:28.3,sMin:25,sMax:40,result:'PASS'},
-  {id:'PNR-043',date:'2025-01-29',op:'OPR-B',mat:'Zinc Cream',mtype:'Pharma',probe:'Pharma Needle',std:'USP915',tSet:25,tAct:25.0,tDev:0.0,r1:41.5,r2:42.0,r3:41.2,mean:41.57,sMin:25,sMax:40,result:'FAIL'},
+  {id:'PNR-043',date:'2025-01-29',op:'OPR-B',mat:'Zinc Cream',mtype:'Pharma',probe:'Pharma Needle',std:'USP 915',tSet:25,tAct:25.0,tDev:0.0,r1:41.5,r2:42.0,r3:41.2,mean:41.57,sMin:25,sMax:40,result:'FAIL'},
   {id:'PNR-044',date:'2025-01-29',op:'OPR-D',mat:'Butter Block',mtype:'Food',probe:'Butter Cone',std:'AOCS Cc 16-60',tSet:15,tAct:15.0,tDev:0.0,r1:105.2,r2:104.8,r3:105.5,mean:105.17,sMin:95,sMax:130,result:'PASS'},
   {id:'PNR-045',date:'2025-01-30',op:'OPR-A',mat:'Bitumen 60/70',mtype:'Bitumen',probe:'Bitumen Needle',std:'ASTM D5',tSet:25,tAct:25.0,tDev:0.0,r1:67.2,r2:67.5,r3:67.0,mean:67.23,sMin:60,sMax:70,result:'PASS'},
   {id:'PNR-046',date:'2025-01-30',op:'OPR-A',mat:'EP2 Grease',mtype:'Grease',probe:'Grease Cone',std:'ASTM D217',tSet:25,tAct:25.0,tDev:0.0,r1:290.5,r2:291.0,r3:290.0,mean:290.5,sMin:265,sMax:295,result:'PASS'},
@@ -951,6 +946,7 @@ new Chart(document.getElementById('marginChart'), {
   }
 });
 
+
 // ─── TABLE: TESTS NEAR SPEC LIMIT ───────────────────────────────────────────
 const nearBody = document.getElementById('near-limit-body');
 DATA.filter(d => {
@@ -981,13 +977,12 @@ const hmData = [
   {id:'PNR-003',batch:'ok',  probe:'ok',  temp:'fail',reps:'ok',  method:'ok',  result:'fail'},
   {id:'PNR-015',batch:'fail',probe:'ok',  temp:'ok',  reps:'ok',  method:'ok',  result:'ok'  },
   {id:'PNR-017',batch:'ok',  probe:'fail',temp:'ok',  reps:'ok',  method:'ok',  result:'fail'},
-  {id:'PNR-019',batch:'ok',  probe:'ok',  temp:'ok',  reps:'ok',  method:'warn',result:'ok'  },
   {id:'PNR-020',batch:'ok',  probe:'ok',  temp:'warn',reps:'ok',  method:'ok',  result:'fail'},
-  {id:'PNR-028',batch:'fail',probe:'ok',  temp:'ok',  reps:'fail',method:'warn',result:'warn'},
+  {id:'PNR-028',batch:'fail',probe:'ok',  temp:'ok',  reps:'fail',method:'ok',  result:'warn'},
   {id:'PNR-030',batch:'ok',  probe:'ok',  temp:'fail',reps:'ok',  method:'ok',  result:'fail'},
   {id:'PNR-033',batch:'ok',  probe:'ok',  temp:'warn',reps:'ok',  method:'ok',  result:'ok'  },
   {id:'PNR-037',batch:'ok',  probe:'fail',temp:'ok',  reps:'ok',  method:'ok',  result:'warn'},
-  {id:'PNR-043',batch:'fail',probe:'ok',  temp:'ok',  reps:'ok',  method:'warn',result:'fail'},
+  {id:'PNR-043',batch:'fail',probe:'ok',  temp:'ok',  reps:'ok',  method:'ok',  result:'fail'},
 ];
 const cc = {ok:'hm-ok',warn:'hm-warn',fail:'hm-fail'};
 const ct = {ok:'OK',warn:'WARN',fail:'FAIL'};
