@@ -1,0 +1,1009 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PNR 500 — Lab Quality Monitor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Sora:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f8f7f4;
+    --bg-surface: #ffffff;
+    --bg-muted: #f1efea;
+    --text-primary: #1a1a18;
+    --text-secondary: #5f5e5a;
+    --text-tertiary: #888780;
+    --border: rgba(0,0,0,0.1);
+    --border-strong: rgba(0,0,0,0.18);
+    --green: #3B6D11;
+    --green-bg: #EAF3DE;
+    --green-text: #27500A;
+    --red: #A32D2D;
+    --red-bg: #FCEBEB;
+    --red-text: #791F1F;
+    --amber: #BA7517;
+    --amber-bg: #FAEEDA;
+    --amber-text: #633806;
+    --blue: #185FA5;
+    --blue-bg: #E6F1FB;
+    --blue-text: #0C447C;
+    --gray-bg: #F1EFE8;
+    --gray-text: #444441;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --chart-text: #5f5e5a;
+    --chart-grid: rgba(0,0,0,0.07);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1c1c1a;
+      --bg-surface: #242422;
+      --bg-muted: #2c2c2a;
+      --text-primary: #e8e6e0;
+      --text-secondary: #b4b2a9;
+      --text-tertiary: #888780;
+      --border: rgba(255,255,255,0.08);
+      --border-strong: rgba(255,255,255,0.15);
+      --green: #97C459;
+      --green-bg: #173404;
+      --green-text: #C0DD97;
+      --red: #F09595;
+      --red-bg: #501313;
+      --red-text: #F7C1C1;
+      --amber: #EF9F27;
+      --amber-bg: #412402;
+      --amber-text: #FAC775;
+      --blue: #85B7EB;
+      --blue-bg: #042C53;
+      --blue-text: #B5D4F4;
+      --gray-bg: #2C2C2A;
+      --gray-text: #D3D1C7;
+      --chart-text: #b4b2a9;
+      --chart-grid: rgba(255,255,255,0.07);
+    }
+  }
+
+  body {
+    font-family: 'Sora', sans-serif;
+    background: var(--bg);
+    color: var(--text-primary);
+    line-height: 1.6;
+    padding: 2rem;
+    min-height: 100vh;
+  }
+
+  .container { max-width: 1100px; margin: 0 auto; }
+  .mono { font-family: 'DM Mono', monospace; }
+
+  .header-bar {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 2rem;
+    padding-bottom: 1.25rem;
+    border-bottom: 0.5px solid var(--border-strong);
+    gap: 16px;
+  }
+  .header-logo-block {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+  }
+  .powered-by {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    white-space: nowrap;
+  }
+  .header-logo {
+    height: 52px;
+    width: auto;
+    flex-shrink: 0;
+    filter: invert(1) brightness(0.2);
+  }
+  @media (prefers-color-scheme: dark) {
+    .header-logo { filter: none; }
+  }
+  .header-left h1 { font-size: 22px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px; }
+  .header-left p { font-size: 13px; color: var(--text-tertiary); margin-bottom: 2px; }
+  .header-meta { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 6px; }
+  .header-meta .device { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text-tertiary); }
+  .header-meta .period { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text-secondary); }
+
+  .section-label {
+    font-size: 10px; font-weight: 500; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--text-tertiary); margin: 0 0 10px;
+  }
+  .section-title { font-size: 14px; font-weight: 500; color: var(--text-primary); margin: 0 0 10px; }
+
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 10px; margin-bottom: 2rem;
+  }
+  .kpi { background: var(--bg-muted); border-radius: var(--radius-md); padding: 14px 16px; }
+  .kpi-label { font-size: 11px; color: var(--text-tertiary); margin-bottom: 4px; }
+  .kpi-value { font-size: 28px; font-weight: 500; font-family: 'DM Mono', monospace; line-height: 1; color: var(--text-primary); }
+  .kpi-sub { font-size: 11px; color: var(--text-secondary); margin-top: 3px; }
+  .kpi.danger .kpi-value { color: var(--red); }
+  .kpi.warn   .kpi-value { color: var(--amber); }
+  .kpi.good   .kpi-value { color: var(--green); }
+
+  hr.divider { border: none; border-top: 0.5px solid var(--border); margin: 2rem 0; }
+
+  .panel {
+    background: var(--bg-surface);
+    border: 0.5px solid var(--border-strong);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem 1.5rem;
+  }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 1.5rem; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 1.5rem; }
+
+  @media (max-width: 700px) {
+    .two-col, .three-col { grid-template-columns: 1fr; }
+    body { padding: 1rem; }
+    .header-bar { flex-direction: column; gap: 12px; }
+    .header-logo { height: 28px; }
+  }
+
+  .flag-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .flag-table th {
+    font-size: 10px; font-weight: 500; color: var(--text-tertiary);
+    letter-spacing: 0.08em; text-transform: uppercase; text-align: left;
+    padding: 0 10px 10px 0; border-bottom: 0.5px solid var(--border-strong);
+  }
+  .flag-table td {
+    padding: 8px 10px 8px 0; border-bottom: 0.5px solid var(--border);
+    color: var(--text-secondary); vertical-align: top;
+  }
+  .flag-table tr:last-child td { border-bottom: none; }
+  .flag-table td.mono { font-size: 11px; color: var(--text-primary); font-family: 'DM Mono', monospace; }
+
+  .badge {
+    display: inline-block; font-size: 10px; font-weight: 500;
+    padding: 2px 8px; border-radius: 4px; white-space: nowrap;
+  }
+  .badge-red    { background: var(--red-bg);   color: var(--red-text); }
+  .badge-amber  { background: var(--amber-bg); color: var(--amber-text); }
+  .badge-green  { background: var(--green-bg); color: var(--green-text); }
+  .badge-gray   { background: var(--gray-bg);  color: var(--gray-text); }
+  .badge-blue   { background: var(--blue-bg);  color: var(--blue-text); }
+
+  .legend-row { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 10px; font-size: 11px; color: var(--text-secondary); }
+  .legend-dot { width: 10px; height: 10px; border-radius: 2px; display: inline-block; margin-right: 4px; vertical-align: middle; }
+
+  .chart-wrap { position: relative; width: 100%; }
+
+  .heatmap-grid {
+    display: grid;
+    grid-template-columns: 110px repeat(6, 1fr);
+    gap: 3px;
+  }
+  .hm-head {
+    font-size: 9px; font-weight: 500; color: var(--text-tertiary);
+    text-align: center; padding: 3px 2px; letter-spacing: 0.04em;
+    text-transform: uppercase; line-height: 1.3;
+  }
+  .hm-label {
+    font-family: 'DM Mono', monospace; font-size: 10px;
+    color: var(--text-secondary); padding: 4px 6px;
+    display: flex; align-items: center;
+  }
+  .hm-cell {
+    border-radius: 3px; height: 22px; display: flex;
+    align-items: center; justify-content: center;
+    font-size: 9px; font-weight: 500; font-family: 'DM Mono', monospace;
+  }
+  .hm-ok   { background: var(--green-bg); color: var(--green-text); }
+  .hm-warn { background: var(--amber-bg); color: var(--amber-text); }
+  .hm-fail { background: var(--red-bg);   color: var(--red-text); }
+
+  .hm-legend { display: flex; gap: 16px; margin-top: 12px; font-size: 10px; color: var(--text-secondary); }
+  .hm-swatch { width: 10px; height: 10px; border-radius: 2px; display: inline-block; margin-right: 4px; vertical-align: middle; }
+
+  /* Rep variability table */
+  .rep-bar-wrap { display: flex; align-items: center; gap: 8px; }
+  .rep-bar-bg { flex: 1; height: 6px; background: var(--bg-muted); border-radius: 3px; overflow: hidden; }
+  .rep-bar-fill { height: 100%; border-radius: 3px; }
+
+  /* Timeline */
+  .timeline-row { display: flex; gap: 4px; align-items: center; margin-bottom: 5px; font-size: 11px; }
+  .timeline-label { width: 80px; font-family: 'DM Mono', monospace; color: var(--text-secondary); flex-shrink: 0; }
+  .timeline-dots { display: flex; gap: 3px; flex-wrap: wrap; }
+  .tl-dot {
+    width: 14px; height: 14px; border-radius: 3px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 7px; font-family: 'DM Mono', monospace; font-weight: 500;
+    cursor: default; position: relative;
+  }
+  .tl-pass   { background: var(--green-bg); color: var(--green-text); }
+  .tl-fail   { background: var(--red-bg);   color: var(--red-text); }
+  .tl-invalid{ background: var(--amber-bg); color: var(--amber-text); }
+
+  /* Sparkline for rep CV */
+  .cv-pill {
+    display: inline-block; font-size: 10px; font-family: 'DM Mono', monospace;
+    padding: 1px 6px; border-radius: 3px;
+  }
+  .cv-low  { background: var(--green-bg); color: var(--green-text); }
+  .cv-mid  { background: var(--amber-bg); color: var(--amber-text); }
+  .cv-high { background: var(--red-bg);   color: var(--red-text); }
+
+  .insight-box {
+    background: var(--blue-bg);
+    border: 0.5px solid rgba(24,95,165,0.2);
+    border-radius: var(--radius-md);
+    padding: 10px 14px;
+    font-size: 12px;
+    color: var(--blue-text);
+    margin-bottom: 1.5rem;
+  }
+  .insight-box strong { font-weight: 600; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header-bar">
+    <div class="header-left">
+      <h1>PNR 500 &mdash; Lab Quality Monitor</h1>
+      <p>Anton Paar Automatic Penetrometer &middot; Multi-material QC dataset &middot; Hypothetical data</p>
+      <div class="header-meta">
+        <span class="device">Anton Paar PNR 500 &middot; Serial #AP-PNR-2025</span>
+        <span class="period">Jan 06 &ndash; Jan 31, 2025 &middot; 50 tests</span>
+      </div>
+    </div>
+    <div class="header-logo-block">
+      <span class="powered-by">powered by</span>
+      <img src="Hyperglade-Logo-White.png" alt="Hyperglade" class="header-logo">
+    </div>
+  </div>
+
+  <!-- LAYER 1: STRUCTURAL INTEGRITY -->
+  <p class="section-label">Layer 1 &mdash; Structural integrity</p>
+
+  <div class="kpi-grid">
+    <div class="kpi">
+      <div class="kpi-label">Total tests</div>
+      <div class="kpi-value">50</div>
+      <div class="kpi-sub">4 operators &middot; 5 materials</div>
+    </div>
+    <div class="kpi good">
+      <div class="kpi-label">Pass rate</div>
+      <div class="kpi-value">78%</div>
+      <div class="kpi-sub">39 pass &middot; 11 fail / invalid</div>
+    </div>
+    <div class="kpi danger">
+      <div class="kpi-label">Missing batch no.</div>
+      <div class="kpi-value">3</div>
+      <div class="kpi-sub">6% of records untraced</div>
+    </div>
+    <div class="kpi danger">
+      <div class="kpi-label">Probe mismatches</div>
+      <div class="kpi-value">2</div>
+      <div class="kpi-sub">PNR-017 &middot; PNR-037</div>
+    </div>
+    <div class="kpi warn">
+      <div class="kpi-label">Temp deviations</div>
+      <div class="kpi-value">4</div>
+      <div class="kpi-sub">&gt;0.5&deg;C off set point</div>
+    </div>
+    <div class="kpi warn">
+      <div class="kpi-label">Incomplete reps.</div>
+      <div class="kpi-value">1</div>
+      <div class="kpi-sub">PNR-028: 1 of 3 required</div>
+    </div>
+    <div class="kpi good">
+      <div class="kpi-label">Method variants</div>
+      <div class="kpi-value">0</div>
+      <div class="kpi-sub">All entries from dropdown</div>
+    </div>
+    <div class="kpi danger">
+      <div class="kpi-label">Flagged records</div>
+      <div class="kpi-value">9</div>
+      <div class="kpi-sub">18% of dataset has issues</div>
+    </div>
+  </div>
+
+  <!-- TOP INSIGHT BAR -->
+  <div class="insight-box">
+    <strong>Key signal:</strong> OPR-B accounts for 4 of 9 flagged records (44%) despite running only 24% of tests &mdash; both missing-batch incidents (PNR-015, PNR-043) and both high-temp deviations (PNR-003, PNR-030) originate from OPR-B. Probe mismatches on PNR-017 (OPR-A) and PNR-037 (OPR-D) each invalidated a test run.
+  </div>
+
+  <hr class="divider">
+
+  <!-- FLAGGED RECORD REGISTRY -->
+  <p class="section-label">Flagged record registry &mdash; structural anomalies</p>
+  <div class="panel" style="margin-bottom:1.5rem;">
+    <table class="flag-table">
+      <thead>
+        <tr>
+          <th>Test ID</th><th>Issue type</th><th>Material</th>
+          <th>Operator</th><th>Detail</th><th>Result</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td class="mono">PNR-003</td><td><span class="badge badge-amber">Temp deviation</span></td><td>Bitumen 60/70</td><td>OPR-B</td><td>Actual 27.4&deg;C vs set 25.0&deg;C (+2.4&deg;C)</td><td><span class="badge badge-red">FAIL</span></td></tr>
+        <tr><td class="mono">PNR-015</td><td><span class="badge badge-red">Missing batch</span></td><td>Zinc Cream</td><td>OPR-B</td><td>Batch number field empty</td><td><span class="badge badge-green">PASS</span></td></tr>
+        <tr><td class="mono">PNR-017</td><td><span class="badge badge-red">Probe mismatch</span></td><td>Bitumen 60/70</td><td>OPR-A</td><td>Grease cone used &mdash; standard requires Bitumen Needle</td><td><span class="badge badge-red">FAIL</span></td></tr>
+        <tr><td class="mono">PNR-020</td><td><span class="badge badge-amber">Temp deviation</span></td><td>Lidocaine Gel</td><td>OPR-B</td><td>Actual 19.5&deg;C vs set 20.0&deg;C (&minus;0.5&deg;C) &middot; gel too stiff</td><td><span class="badge badge-red">FAIL</span></td></tr>
+        <tr><td class="mono">PNR-028</td><td><span class="badge badge-red">Incomplete rep. + Missing batch</span></td><td>Vaseline</td><td>OPR-D</td><td>Only 1 of 3 replicates recorded &middot; batch number empty</td><td><span class="badge badge-amber">INVALID</span></td></tr>
+        <tr><td class="mono">PNR-030</td><td><span class="badge badge-amber">Temp deviation</span></td><td>Bitumen 60/70</td><td>OPR-B</td><td>Actual 28.1&deg;C vs set 25.0&deg;C (+3.1&deg;C) &mdash; thermal drift</td><td><span class="badge badge-red">FAIL</span></td></tr>
+        <tr><td class="mono">PNR-033</td><td><span class="badge badge-amber">Temp deviation</span></td><td>Margarine</td><td>OPR-C</td><td>Actual 14.5&deg;C vs set 15.0&deg;C (&minus;0.5&deg;C)</td><td><span class="badge badge-green">PASS</span></td></tr>
+        <tr><td class="mono">PNR-037</td><td><span class="badge badge-red">Probe mismatch</span></td><td>Lidocaine Gel</td><td>OPR-D</td><td>Pharma Cone used &mdash; Ph.Eur.2.9.9 requires Needle</td><td><span class="badge badge-amber">INVALID</span></td></tr>
+        <tr><td class="mono">PNR-043</td><td><span class="badge badge-red">Missing batch</span></td><td>Zinc Cream</td><td>OPR-B</td><td>Batch number field empty &middot; result OOS unflagged in operator notes</td><td><span class="badge badge-red">FAIL</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <hr class="divider">
+
+  <!-- LAYER 2: STATISTICAL INTELLIGENCE -->
+  <p class="section-label">Layer 2 &mdash; Statistical intelligence</p>
+
+  <div class="two-col">
+    <div class="panel">
+      <p class="section-title">Pass / fail by material</p>
+      <div class="legend-row">
+        <span><span class="legend-dot" style="background:#639922;"></span>Pass</span>
+        <span><span class="legend-dot" style="background:#E24B4A;"></span>Fail / Invalid</span>
+      </div>
+      <div class="chart-wrap" style="height:220px;">
+        <canvas id="pfChart"></canvas>
+      </div>
+    </div>
+    <div class="panel">
+      <p class="section-title">Temperature deviation per test</p>
+      <div class="legend-row">
+        <span><span class="legend-dot" style="background:#378ADD;"></span>Within &plusmn;0.3&deg;C</span>
+        <span><span class="legend-dot" style="background:#E24B4A;"></span>Exceeded &plusmn;0.5&deg;C</span>
+      </div>
+      <div class="chart-wrap" style="height:220px;">
+        <canvas id="tempChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <div class="panel">
+      <p class="section-title">Operator OOS rate</p>
+      <div class="legend-row">
+        <span><span class="legend-dot" style="background:#E24B4A;"></span>Fail rate %</span>
+      </div>
+      <div class="chart-wrap" style="height:220px;">
+        <canvas id="oprChart"></canvas>
+      </div>
+    </div>
+    <div class="panel">
+      <p class="section-title">Bitumen 60/70 &mdash; penetration depth trend</p>
+      <div class="legend-row">
+        <span><span class="legend-dot" style="background:#378ADD;"></span>Mean depth</span>
+        <span><span class="legend-dot" style="background:#E24B4A; height:3px; width:22px; border-radius:0;"></span>Spec bounds (60&ndash;70 mm)</span>
+      </div>
+      <div class="chart-wrap" style="height:220px;">
+        <canvas id="trendChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="margin-bottom:1.5rem;">
+    <p class="section-title">Penetration depth distribution &mdash; mean by material</p>
+    <div class="legend-row">
+      <span><span class="legend-dot" style="background:#378ADD;"></span>Bitumen</span>
+      <span><span class="legend-dot" style="background:#639922;"></span>Grease</span>
+      <span><span class="legend-dot" style="background:#D85A30;"></span>Pharma</span>
+      <span><span class="legend-dot" style="background:#BA7517;"></span>Wax</span>
+      <span><span class="legend-dot" style="background:#7F77DD;"></span>Food</span>
+    </div>
+    <div class="chart-wrap" style="height:200px;">
+      <canvas id="distChart"></canvas>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- LAYER 3: NEW — REPLICATE PRECISION -->
+  <p class="section-label">Layer 3 &mdash; Replicate precision &amp; measurement uncertainty</p>
+
+  <div class="two-col">
+    <div class="panel">
+      <p class="section-title">Within-test CV% by material type</p>
+      <div class="legend-row">
+        <span><span class="legend-dot" style="background:#639922;"></span>&lt;1% excellent</span>
+        <span><span class="legend-dot" style="background:#BA7517;"></span>1–2% acceptable</span>
+        <span><span class="legend-dot" style="background:#E24B4A;"></span>&gt;2% poor</span>
+      </div>
+      <div class="chart-wrap" style="height:220px;">
+        <canvas id="cvChart"></canvas>
+      </div>
+    </div>
+    <div class="panel">
+      <p class="section-title">Rep-to-rep range (Max&minus;Min) &mdash; all tests</p>
+      <div class="legend-row">
+        <span><span class="legend-dot" style="background:#378ADD;"></span>Spread (mm)</span>
+      </div>
+      <div class="chart-wrap" style="height:220px;">
+        <canvas id="rangeChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Replicate precision table -->
+  <div class="panel" style="margin-bottom:1.5rem;">
+    <p class="section-title">High-variability tests &mdash; rep spread &gt;1.5 mm</p>
+    <table class="flag-table">
+      <thead>
+        <tr><th>Test ID</th><th>Material</th><th>Operator</th><th>Rep 1</th><th>Rep 2</th><th>Rep 3</th><th>Spread</th><th>CV%</th><th>Result</th></tr>
+      </thead>
+      <tbody id="rep-table-body"></tbody>
+    </table>
+  </div>
+
+  <hr class="divider">
+
+  <!-- LAYER 4: NEW — TEST TIMELINE -->
+  <p class="section-label">Layer 4 &mdash; Chronological test execution map</p>
+  <div class="panel" style="margin-bottom:1.5rem;">
+    <p class="section-title">Daily test outcomes by operator</p>
+    <div style="margin-bottom:10px; display:flex; gap:16px; font-size:10px; color:var(--text-secondary);">
+      <span><span class="tl-dot tl-pass" style="display:inline-flex; width:12px; height:12px; margin-right:4px; border-radius:2px; vertical-align:middle;"></span>Pass</span>
+      <span><span class="tl-dot tl-fail" style="display:inline-flex; width:12px; height:12px; margin-right:4px; border-radius:2px; vertical-align:middle;"></span>Fail</span>
+      <span><span class="tl-dot tl-invalid" style="display:inline-flex; width:12px; height:12px; margin-right:4px; border-radius:2px; vertical-align:middle;"></span>Invalid</span>
+    </div>
+    <div id="timeline-container"></div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- LAYER 5: NEW — SPEC PROXIMITY -->
+  <p class="section-label">Layer 5 &mdash; Spec proximity analysis</p>
+
+  <div class="two-col">
+    <div class="panel">
+      <p class="section-title">Distance to nearest spec limit &mdash; all tests</p>
+      <div class="legend-row">
+        <span><span class="legend-dot" style="background:#639922;"></span>&gt;10 mm margin</span>
+        <span><span class="legend-dot" style="background:#BA7517;"></span>3–10 mm margin</span>
+        <span><span class="legend-dot" style="background:#E24B4A;"></span>&lt;3 mm margin or OOS</span>
+      </div>
+      <div class="chart-wrap" style="height:240px;">
+        <canvas id="marginChart"></canvas>
+      </div>
+    </div>
+    <div class="panel">
+      <table class="flag-table">
+        <thead>
+          <tr><th>Test ID</th><th>Material</th><th>Mean (mm)</th><th>Limit</th><th>Margin</th></tr>
+        </thead>
+        <tbody id="near-limit-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- LAYER 6: NEW — OPERATOR PROFILE -->
+  <p class="section-label">Layer 6 &mdash; Operator performance profile</p>
+
+  <div class="two-col">
+    <div class="panel">
+      <p class="section-title">Tests run vs. issues generated per operator</p>
+      <div class="legend-row">
+        <span><span class="legend-dot" style="background:#378ADD;"></span>Tests run</span>
+        <span><span class="legend-dot" style="background:#E24B4A;"></span>Flagged records</span>
+      </div>
+      <div class="chart-wrap" style="height:220px;">
+        <canvas id="oprProfileChart"></canvas>
+      </div>
+    </div>
+    <div class="panel">
+      <p class="section-title">Mean temp deviation by operator</p>
+      <div class="legend-row">
+        <span><span class="legend-dot" style="background:#378ADD;"></span>Avg |&Delta;Temp| (&deg;C)</span>
+      </div>
+      <div class="chart-wrap" style="height:220px;">
+        <canvas id="oprTempChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Operator summary table -->
+  <div class="panel" style="margin-bottom:1.5rem;">
+    <p class="section-title">Operator summary</p>
+    <table class="flag-table">
+      <thead>
+        <tr><th>Operator</th><th>Tests</th><th>Pass</th><th>Fail/Invalid</th><th>Fail rate</th><th>Flags raised</th><th>Avg |&Delta;T| &deg;C</th><th>Materials</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="mono">OPR-A</td><td>15</td><td>11</td><td>4</td>
+          <td><span class="badge badge-amber">27%</span></td>
+          <td>2 (probe mismatch x2)</td>
+          <td class="mono">0.09</td>
+          <td>Bitumen, Grease</td>
+        </tr>
+        <tr>
+          <td class="mono">OPR-B</td><td>12</td><td>8</td><td>4</td>
+          <td><span class="badge badge-red">33%</span></td>
+          <td>5 (temp dev, missing batch, method)</td>
+          <td class="mono">0.49</td>
+          <td>Bitumen, Pharma, Wax</td>
+        </tr>
+        <tr>
+          <td class="mono">OPR-C</td><td>13</td><td>11</td><td>2</td>
+          <td><span class="badge badge-amber">15%</span></td>
+          <td>2 (temp dev, method name)</td>
+          <td class="mono">0.15</td>
+          <td>Grease, Food, Pharma, Bitumen</td>
+        </tr>
+        <tr>
+          <td class="mono">OPR-D</td><td>10</td><td>9</td><td>1</td>
+          <td><span class="badge badge-green">10%</span></td>
+          <td>2 (probe mismatch, incomplete rep)</td>
+          <td class="mono">0.07</td>
+          <td>Pharma, Food</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <hr class="divider">
+
+  <!-- DATA QUALITY HEATMAP (original) -->
+  <p class="section-label">Data quality heatmap &mdash; per flagged test</p>
+  <div class="panel" style="margin-bottom:1.5rem;">
+    <div class="heatmap-grid" style="margin-bottom:6px;">
+      <div class="hm-head" style="text-align:left;"></div>
+      <div class="hm-head">Batch<br>present</div>
+      <div class="hm-head">Correct<br>probe</div>
+      <div class="hm-head">Temp<br>&plusmn;0.5&deg;C</div>
+      <div class="hm-head">3 reps<br>recorded</div>
+      <div class="hm-head">Method<br>canonical</div>
+      <div class="hm-head">Result<br>in-spec</div>
+    </div>
+    <div id="heatmap-rows"></div>
+    <div class="hm-legend">
+      <span><span class="hm-swatch" style="background:var(--green-bg);"></span>OK</span>
+      <span><span class="hm-swatch" style="background:var(--amber-bg);"></span>Warning</span>
+      <span><span class="hm-swatch" style="background:var(--red-bg);"></span>Fail / Missing</span>
+    </div>
+  </div>
+
+
+</div>
+
+<script>
+// ─── RAW DATA FROM EXCEL ────────────────────────────────────────────────────
+const DATA = [
+  {id:'PNR-001',date:'2025-01-06',op:'OPR-A',mat:'Bitumen 60/70',mtype:'Bitumen',probe:'Bitumen Needle',std:'ASTM D5',tSet:25,tAct:25.1,tDev:0.1,r1:64.2,r2:64.8,r3:65.1,mean:64.7,sMin:60,sMax:70,result:'PASS'},
+  {id:'PNR-002',date:'2025-01-06',op:'OPR-A',mat:'Bitumen 60/70',mtype:'Bitumen',probe:'Bitumen Needle',std:'ASTM D5',tSet:25,tAct:25.3,tDev:0.3,r1:63.1,r2:62.7,r3:63.5,mean:63.1,sMin:60,sMax:70,result:'PASS'},
+  {id:'PNR-003',date:'2025-01-07',op:'OPR-B',mat:'Bitumen 60/70',mtype:'Bitumen',probe:'Bitumen Needle',std:'ASTM D5',tSet:25,tAct:27.4,tDev:2.4,r1:74.5,r2:73.9,r3:74.2,mean:74.2,sMin:60,sMax:70,result:'FAIL'},
+  {id:'PNR-004',date:'2025-01-07',op:'OPR-B',mat:'Bitumen 60/70',mtype:'Bitumen',probe:'Bitumen Needle',std:'ASTM D5',tSet:25,tAct:25.0,tDev:0.0,r1:68.1,r2:67.4,r3:67.9,mean:67.8,sMin:60,sMax:70,result:'PASS'},
+  {id:'PNR-005',date:'2025-01-08',op:'OPR-C',mat:'EP2 Grease',mtype:'Grease',probe:'Grease Cone',std:'ASTM D217',tSet:25,tAct:25.0,tDev:0.0,r1:270.0,r2:271.5,r3:269.8,mean:270.43,sMin:265,sMax:295,result:'PASS'},
+  {id:'PNR-006',date:'2025-01-08',op:'OPR-C',mat:'EP2 Grease',mtype:'Grease',probe:'Grease Cone',std:'ASTM D217',tSet:25,tAct:25.1,tDev:0.1,r1:280.3,r2:281.0,r3:279.5,mean:280.27,sMin:265,sMax:295,result:'PASS'},
+  {id:'PNR-007',date:'2025-01-09',op:'OPR-A',mat:'EP0 Grease',mtype:'Grease',probe:'Grease Cone',std:'ASTM D217',tSet:25,tAct:25.2,tDev:0.2,r1:355.0,r2:358.2,r3:354.0,mean:355.73,sMin:355,sMax:385,result:'PASS'},
+  {id:'PNR-008',date:'2025-01-10',op:'OPR-D',mat:'Lidocaine Gel',mtype:'Pharma',probe:'Pharma Needle',std:'Ph.Eur.2.9.9',tSet:20,tAct:20.1,tDev:0.1,r1:22.4,r2:22.8,r3:23.1,mean:22.77,sMin:18,sMax:28,result:'PASS'},
+  {id:'PNR-009',date:'2025-01-10',op:'OPR-D',mat:'Lidocaine Gel',mtype:'Pharma',probe:'Pharma Needle',std:'Ph.Eur.2.9.9',tSet:20,tAct:20.0,tDev:0.0,r1:19.1,r2:18.9,r3:19.4,mean:19.13,sMin:18,sMax:28,result:'PASS'},
+  {id:'PNR-010',date:'2025-01-10',op:'OPR-B',mat:'Paraffin Wax',mtype:'Wax',probe:'Needle',std:'ASTM D1321',tSet:25,tAct:25.0,tDev:0.0,r1:12.3,r2:12.1,r3:12.5,mean:12.3,sMin:10,sMax:20,result:'PASS'},
+  {id:'PNR-011',date:'2025-01-13',op:'OPR-A',mat:'Bitumen 80/100',mtype:'Bitumen',probe:'Bitumen Needle',std:'EN 1426',tSet:25,tAct:25.0,tDev:0.0,r1:88.4,r2:87.9,r3:89.0,mean:88.43,sMin:80,sMax:100,result:'PASS'},
+  {id:'PNR-012',date:'2025-01-13',op:'OPR-A',mat:'Bitumen 80/100',mtype:'Bitumen',probe:'Bitumen Needle',std:'EN 1426',tSet:25,tAct:25.0,tDev:0.0,r1:101.2,r2:100.8,r3:101.5,mean:101.17,sMin:80,sMax:100,result:'FAIL'},
+  {id:'PNR-013',date:'2025-01-13',op:'OPR-C',mat:'EP3 Grease',mtype:'Grease',probe:'Grease Cone',std:'ASTM D217',tSet:25,tAct:25.3,tDev:0.3,r1:218.0,r2:220.1,r3:217.5,mean:218.53,sMin:220,sMax:250,result:'FAIL'},
+  {id:'PNR-014',date:'2025-01-14',op:'OPR-B',mat:'Zinc Cream',mtype:'Pharma',probe:'Pharma Needle',std:'USP 915',tSet:25,tAct:24.8,tDev:-0.2,r1:31.4,r2:31.0,r3:31.8,mean:31.4,sMin:25,sMax:40,result:'PASS'},
+  {id:'PNR-015',date:'2025-01-14',op:'OPR-B',mat:'Zinc Cream',mtype:'Pharma',probe:'Pharma Needle',std:'USP 915',tSet:25,tAct:25.0,tDev:0.0,r1:34.5,r2:34.2,r3:35.0,mean:34.57,sMin:25,sMax:40,result:'PASS'},
+  {id:'PNR-016',date:'2025-01-14',op:'OPR-D',mat:'Butter Block',mtype:'Food',probe:'Butter Cone',std:'AOCS Cc 16-60',tSet:15,tAct:15.1,tDev:0.1,r1:110.0,r2:108.5,r3:109.2,mean:109.23,sMin:95,sMax:130,result:'PASS'},
+  {id:'PNR-017',date:'2025-01-15',op:'OPR-A',mat:'Bitumen 60/70',mtype:'Bitumen',probe:'Grease Cone',std:'ASTM D5',tSet:25,tAct:25.0,tDev:0.0,r1:58.2,r2:57.9,r3:58.5,mean:58.2,sMin:60,sMax:70,result:'FAIL'},
+  {id:'PNR-018',date:'2025-01-15',op:'OPR-A',mat:'Bitumen 60/70',mtype:'Bitumen',probe:'Bitumen Needle',std:'ASTM D5',tSet:25,tAct:25.0,tDev:0.0,r1:65.4,r2:65.0,r3:65.7,mean:65.37,sMin:60,sMax:70,result:'PASS'},
+  {id:'PNR-019',date:'2025-01-15',op:'OPR-C',mat:'EP2 Grease',mtype:'Grease',probe:'Grease Cone',std:'ASTM D217',tSet:25,tAct:25.0,tDev:0.0,r1:277.4,r2:278.0,r3:276.9,mean:277.43,sMin:265,sMax:295,result:'PASS'},
+  {id:'PNR-020',date:'2025-01-16',op:'OPR-B',mat:'Lidocaine Gel',mtype:'Pharma',probe:'Pharma Needle',std:'Ph.Eur.2.9.9',tSet:20,tAct:19.5,tDev:-0.5,r1:26.1,r2:26.3,r3:25.9,mean:26.1,sMin:18,sMax:28,result:'FAIL'},
+  {id:'PNR-021',date:'2025-01-16',op:'OPR-C',mat:'Butter Block',mtype:'Food',probe:'Butter Cone',std:'AOCS Cc 16-60',tSet:15,tAct:15.0,tDev:0.0,r1:115.0,r2:114.5,r3:115.8,mean:115.1,sMin:95,sMax:130,result:'PASS'},
+  {id:'PNR-022',date:'2025-01-17',op:'OPR-A',mat:'EP2 Grease',mtype:'Grease',probe:'Grease Cone',std:'ASTM D217',tSet:25,tAct:25.0,tDev:0.0,r1:268.0,r2:267.5,r3:268.8,mean:268.1,sMin:265,sMax:295,result:'PASS'},
+  {id:'PNR-023',date:'2025-01-17',op:'OPR-D',mat:'Vaseline',mtype:'Pharma',probe:'Pharma Needle',std:'Ph.Eur.2.9.9',tSet:25,tAct:25.2,tDev:0.2,r1:50.3,r2:50.1,r3:50.6,mean:50.33,sMin:45,sMax:60,result:'PASS'},
+  {id:'PNR-024',date:'2025-01-20',op:'OPR-C',mat:'Bitumen 60/70',mtype:'Bitumen',probe:'Bitumen Needle',std:'ASTM D5',tSet:25,tAct:25.1,tDev:0.1,r1:61.5,r2:61.2,r3:61.8,mean:61.5,sMin:60,sMax:70,result:'PASS'},
+  {id:'PNR-025',date:'2025-01-20',op:'OPR-A',mat:'Bitumen 60/70',mtype:'Bitumen',probe:'Bitumen Needle',std:'ASTM D5',tSet:25,tAct:25.0,tDev:0.0,r1:70.8,r2:70.5,r3:71.2,mean:70.83,sMin:60,sMax:70,result:'FAIL'},
+  {id:'PNR-026',date:'2025-01-20',op:'OPR-B',mat:'Paraffin Wax',mtype:'Wax',probe:'Needle',std:'ASTM D1321',tSet:25,tAct:25.0,tDev:0.0,r1:14.8,r2:14.5,r3:15.1,mean:14.8,sMin:10,sMax:20,result:'PASS'},
+  {id:'PNR-027',date:'2025-01-21',op:'OPR-C',mat:'EP3 Grease',mtype:'Grease',probe:'Grease Cone',std:'ISO 2137',tSet:25,tAct:25.0,tDev:0.0,r1:238.0,r2:237.5,r3:238.8,mean:238.1,sMin:220,sMax:250,result:'PASS'},
+  {id:'PNR-028',date:'2025-01-21',op:'OPR-D',mat:'Vaseline',mtype:'Pharma',probe:'Pharma Needle',std:'Ph.Eur.2.9.9',tSet:25,tAct:25.0,tDev:0.0,r1:48.5,r2:null,r3:null,mean:48.5,sMin:45,sMax:60,result:'INVALID'},
+  {id:'PNR-029',date:'2025-01-21',op:'OPR-A',mat:'EP0 Grease',mtype:'Grease',probe:'Grease Cone',std:'ASTM D217',tSet:25,tAct:25.0,tDev:0.0,r1:362.0,r2:361.5,r3:362.8,mean:362.1,sMin:355,sMax:385,result:'PASS'},
+  {id:'PNR-030',date:'2025-01-22',op:'OPR-B',mat:'Bitumen 60/70',mtype:'Bitumen',probe:'Bitumen Needle',std:'ASTM D5',tSet:25,tAct:28.1,tDev:3.1,r1:78.5,r2:78.0,r3:78.4,mean:78.3,sMin:60,sMax:70,result:'FAIL'},
+  {id:'PNR-031',date:'2025-01-22',op:'OPR-B',mat:'Bitumen 60/70',mtype:'Bitumen',probe:'Bitumen Needle',std:'ASTM D5',tSet:25,tAct:25.0,tDev:0.0,r1:66.5,r2:66.0,r3:66.8,mean:66.43,sMin:60,sMax:70,result:'PASS'},
+  {id:'PNR-032',date:'2025-01-23',op:'OPR-C',mat:'Margarine',mtype:'Food',probe:'Butter Cone',std:'AOCS Cc 16-60',tSet:15,tAct:15.0,tDev:0.0,r1:130.5,r2:131.0,r3:130.2,mean:130.57,sMin:110,sMax:150,result:'PASS'},
+  {id:'PNR-033',date:'2025-01-23',op:'OPR-C',mat:'Margarine',mtype:'Food',probe:'Butter Cone',std:'AOCS Cc 16-60',tSet:15,tAct:14.5,tDev:-0.5,r1:118.0,r2:117.5,r3:118.8,mean:118.1,sMin:110,sMax:150,result:'PASS'},
+  {id:'PNR-034',date:'2025-01-24',op:'OPR-A',mat:'EP1 Grease',mtype:'Grease',probe:'Grease Cone',std:'ASTM D217',tSet:25,tAct:25.0,tDev:0.0,r1:310.0,r2:311.5,r3:309.8,mean:310.43,sMin:310,sMax:340,result:'PASS'},
+  {id:'PNR-035',date:'2025-01-24',op:'OPR-A',mat:'EP1 Grease',mtype:'Grease',probe:'Grease Cone',std:'ASTM D217',tSet:25,tAct:25.0,tDev:0.0,r1:340.5,r2:341.0,r3:340.2,mean:340.57,sMin:310,sMax:340,result:'FAIL'},
+  {id:'PNR-036',date:'2025-01-27',op:'OPR-D',mat:'Lidocaine Gel',mtype:'Pharma',probe:'Pharma Needle',std:'Ph.Eur.2.9.9',tSet:20,tAct:20.0,tDev:0.0,r1:24.2,r2:24.0,r3:24.5,mean:24.23,sMin:18,sMax:28,result:'PASS'},
+  {id:'PNR-037',date:'2025-01-27',op:'OPR-D',mat:'Lidocaine Gel',mtype:'Pharma',probe:'Pharma Cone',std:'Ph.Eur.2.9.9',tSet:20,tAct:20.0,tDev:0.0,r1:24.8,r2:25.0,r3:24.6,mean:24.8,sMin:18,sMax:28,result:'INVALID'},
+  {id:'PNR-038',date:'2025-01-27',op:'OPR-B',mat:'Paraffin Wax',mtype:'Wax',probe:'Needle',std:'ASTM D1321',tSet:25,tAct:25.0,tDev:0.0,r1:9.5,r2:9.2,r3:9.8,mean:9.5,sMin:10,sMax:20,result:'FAIL'},
+  {id:'PNR-039',date:'2025-01-28',op:'OPR-C',mat:'Bitumen 60/70',mtype:'Bitumen',probe:'Bitumen Needle',std:'ASTM D5',tSet:25,tAct:25.0,tDev:0.0,r1:63.8,r2:64.1,r3:63.5,mean:63.8,sMin:60,sMax:70,result:'PASS'},
+  {id:'PNR-040',date:'2025-01-28',op:'OPR-C',mat:'Bitumen 60/70',mtype:'Bitumen',probe:'Bitumen Needle',std:'ASTM D5',tSet:25,tAct:25.0,tDev:0.0,r1:69.8,r2:70.1,r3:69.5,mean:69.8,sMin:60,sMax:70,result:'PASS'},
+  {id:'PNR-041',date:'2025-01-28',op:'OPR-A',mat:'EP2 Grease',mtype:'Grease',probe:'Grease Cone',std:'ASTM D217',tSet:25,tAct:25.0,tDev:0.0,r1:285.0,r2:284.5,r3:285.5,mean:285.0,sMin:265,sMax:295,result:'PASS'},
+  {id:'PNR-042',date:'2025-01-29',op:'OPR-B',mat:'Zinc Cream',mtype:'Pharma',probe:'Pharma Needle',std:'USP 915',tSet:25,tAct:25.0,tDev:0.0,r1:28.3,r2:28.0,r3:28.6,mean:28.3,sMin:25,sMax:40,result:'PASS'},
+  {id:'PNR-043',date:'2025-01-29',op:'OPR-B',mat:'Zinc Cream',mtype:'Pharma',probe:'Pharma Needle',std:'USP 915',tSet:25,tAct:25.0,tDev:0.0,r1:41.5,r2:42.0,r3:41.2,mean:41.57,sMin:25,sMax:40,result:'FAIL'},
+  {id:'PNR-044',date:'2025-01-29',op:'OPR-D',mat:'Butter Block',mtype:'Food',probe:'Butter Cone',std:'AOCS Cc 16-60',tSet:15,tAct:15.0,tDev:0.0,r1:105.2,r2:104.8,r3:105.5,mean:105.17,sMin:95,sMax:130,result:'PASS'},
+  {id:'PNR-045',date:'2025-01-30',op:'OPR-A',mat:'Bitumen 60/70',mtype:'Bitumen',probe:'Bitumen Needle',std:'ASTM D5',tSet:25,tAct:25.0,tDev:0.0,r1:67.2,r2:67.5,r3:67.0,mean:67.23,sMin:60,sMax:70,result:'PASS'},
+  {id:'PNR-046',date:'2025-01-30',op:'OPR-A',mat:'EP2 Grease',mtype:'Grease',probe:'Grease Cone',std:'ASTM D217',tSet:25,tAct:25.0,tDev:0.0,r1:290.5,r2:291.0,r3:290.0,mean:290.5,sMin:265,sMax:295,result:'PASS'},
+  {id:'PNR-047',date:'2025-01-30',op:'OPR-C',mat:'Vaseline',mtype:'Pharma',probe:'Pharma Needle',std:'Ph.Eur.2.9.9',tSet:25,tAct:25.0,tDev:0.0,r1:52.1,r2:52.4,r3:51.8,mean:52.1,sMin:45,sMax:60,result:'PASS'},
+  {id:'PNR-048',date:'2025-01-31',op:'OPR-B',mat:'EP3 Grease',mtype:'Grease',probe:'Grease Cone',std:'ASTM D217',tSet:25,tAct:25.1,tDev:0.1,r1:232.0,r2:233.5,r3:231.8,mean:232.43,sMin:220,sMax:250,result:'PASS'},
+  {id:'PNR-049',date:'2025-01-31',op:'OPR-D',mat:'Margarine',mtype:'Food',probe:'Butter Cone',std:'AOCS Cc 16-60',tSet:15,tAct:15.0,tDev:0.0,r1:142.0,r2:143.5,r3:141.8,mean:142.43,sMin:110,sMax:150,result:'PASS'},
+  {id:'PNR-050',date:'2025-01-31',op:'OPR-C',mat:'Bitumen 60/70',mtype:'Bitumen',probe:'Bitumen Needle',std:'ASTM D5',tSet:25,tAct:25.0,tDev:0.0,r1:65.5,r2:66.0,r3:65.2,mean:65.57,sMin:60,sMax:70,result:'PASS'},
+];
+
+// ─── CHART THEMING ──────────────────────────────────────────────────────────
+const isDark = matchMedia('(prefers-color-scheme: dark)').matches;
+const tc = isDark ? '#b4b2a9' : '#5f5e5a';
+const gc = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.07)';
+const tf = { size: 11, family: "'DM Mono', monospace" };
+
+// ─── CHART: PASS/FAIL BY MATERIAL ───────────────────────────────────────────
+const matGroups = {};
+DATA.forEach(d => {
+  const g = d.mtype;
+  if (!matGroups[g]) matGroups[g] = {pass:0,fail:0};
+  if (d.result === 'PASS') matGroups[g].pass++;
+  else matGroups[g].fail++;
+});
+const matLabels = Object.keys(matGroups);
+new Chart(document.getElementById('pfChart'), {
+  type: 'bar',
+  data: {
+    labels: matLabels,
+    datasets: [
+      { label: 'Pass', data: matLabels.map(m=>matGroups[m].pass), backgroundColor: '#639922', borderRadius: 3 },
+      { label: 'Fail/Invalid', data: matLabels.map(m=>matGroups[m].fail), backgroundColor: '#E24B4A', borderRadius: 3 }
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { stacked: true, ticks: { color: tc, font: tf }, grid: { color: gc } },
+      y: { stacked: true, ticks: { color: tc, font: tf, stepSize: 2 }, grid: { color: gc } }
+    }
+  }
+});
+
+// ─── CHART: TEMP DEVIATION SCATTER ──────────────────────────────────────────
+const tDevs = DATA.map(d => d.tDev);
+const tNums = DATA.map((d,i) => i+1);
+new Chart(document.getElementById('tempChart'), {
+  type: 'scatter',
+  data: { datasets: [{
+    label: 'Temp deviation',
+    data: tNums.map((t,i) => ({x:t, y:tDevs[i]})),
+    backgroundColor: tDevs.map(d => Math.abs(d)>0.5 ? '#E24B4A' : '#378ADD'),
+    pointRadius: 5, pointHoverRadius: 7
+  }]},
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend:{display:false}, tooltip:{callbacks:{label: ctx=>`${DATA[ctx.dataIndex].id}: ${ctx.raw.y>=0?'+':''}${ctx.raw.y.toFixed(1)}°C`}}},
+    scales: {
+      x: { title:{display:true,text:'Test sequence',color:tc,font:{size:10}}, ticks:{color:tc,font:tf}, grid:{color:gc} },
+      y: { title:{display:true,text:'ΔTemp (°C)',color:tc,font:{size:10}}, ticks:{color:tc,font:tf}, grid:{color:gc} }
+    }
+  }
+});
+
+// ─── CHART: OPERATOR OOS RATE ────────────────────────────────────────────────
+new Chart(document.getElementById('oprChart'), {
+  type: 'bar',
+  data: {
+    labels: ['OPR-A (15 tests)','OPR-B (12 tests)','OPR-C (13 tests)','OPR-D (10 tests)'],
+    datasets: [{ label: 'Fail rate %', data: [27,33,15,10], backgroundColor: ['#E24B4A','#E24B4A','#EF9F27','#639922'], borderRadius: 4 }]
+  },
+  options: {
+    indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+    plugins: { legend:{display:false} },
+    scales: {
+      x: { max:50, ticks:{color:tc,font:tf,callback:v=>v+'%'}, grid:{color:gc} },
+      y: { ticks:{color:tc,font:tf}, grid:{display:false} }
+    }
+  }
+});
+
+// ─── CHART: BITUMEN 60/70 TREND ──────────────────────────────────────────────
+const bit6070 = DATA.filter(d => d.mat === 'Bitumen 60/70');
+const bLbls = bit6070.map(d=>d.id);
+const bVals = bit6070.map(d=>d.mean);
+new Chart(document.getElementById('trendChart'), {
+  type: 'line',
+  data: {
+    labels: bLbls,
+    datasets: [
+      { label: 'Depth (mm)', data: bVals, borderColor:'#378ADD', backgroundColor:'rgba(55,138,221,0.07)', pointBackgroundColor: bVals.map(v=>(v<60||v>70)?'#E24B4A':'#378ADD'), pointRadius:5, pointHoverRadius:7, tension:0.3 },
+      { label: 'Max 70mm', data: Array(bLbls.length).fill(70), borderColor:'#E24B4A', borderDash:[4,3], borderWidth:1.5, pointRadius:0 },
+      { label: 'Min 60mm', data: Array(bLbls.length).fill(60), borderColor:'#E24B4A', borderDash:[4,3], borderWidth:1.5, pointRadius:0 }
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend:{display:false} },
+    scales: {
+      x: { ticks:{color:tc,font:{size:9,family:"'DM Mono',monospace"},maxRotation:45,autoSkip:false}, grid:{color:gc} },
+      y: { ticks:{color:tc,font:tf}, grid:{color:gc}, title:{display:true,text:'Depth (mm)',color:tc,font:{size:10}} }
+    }
+  }
+});
+
+// ─── CHART: MEAN DEPTH BY MATERIAL ──────────────────────────────────────────
+const matMeans = {};
+DATA.forEach(d => {
+  if (!matMeans[d.mtype]) matMeans[d.mtype] = [];
+  matMeans[d.mtype].push(d.mean);
+});
+const mmLabels = Object.keys(matMeans);
+const mmVals = mmLabels.map(m => {
+  const vals = matMeans[m];
+  return +(vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(1);
+});
+const matColors = {Bitumen:'#378ADD',Grease:'#639922',Pharma:'#D85A30',Wax:'#BA7517',Food:'#7F77DD'};
+new Chart(document.getElementById('distChart'), {
+  type: 'bar',
+  data: {
+    labels: mmLabels,
+    datasets: [{ label: 'Mean depth (mm)', data: mmVals, backgroundColor: mmLabels.map(m=>matColors[m]||'#888'), borderRadius: 4 }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend:{display:false} },
+    scales: {
+      x: { ticks:{color:tc,font:tf}, grid:{display:false} },
+      y: { ticks:{color:tc,font:tf}, grid:{color:gc}, title:{display:true,text:'mm',color:tc,font:{size:10}} }
+    }
+  }
+});
+
+// ─── CHART: WITHIN-TEST CV% BY MATERIAL ─────────────────────────────────────
+function cv(r1,r2,r3) {
+  if (r1==null||r2==null||r3==null) return null;
+  const m = (r1+r2+r3)/3;
+  const sd = Math.sqrt(((r1-m)**2+(r2-m)**2+(r3-m)**2)/2);
+  return m > 0 ? (sd/m)*100 : null;
+}
+const cvByMat = {};
+DATA.forEach(d => {
+  const c = cv(d.r1,d.r2,d.r3);
+  if (c===null) return;
+  if (!cvByMat[d.mtype]) cvByMat[d.mtype] = [];
+  cvByMat[d.mtype].push(c);
+});
+const cvLabels = Object.keys(cvByMat);
+const cvVals = cvLabels.map(m => +(cvByMat[m].reduce((a,b)=>a+b,0)/cvByMat[m].length).toFixed(3));
+new Chart(document.getElementById('cvChart'), {
+  type: 'bar',
+  data: {
+    labels: cvLabels,
+    datasets: [{
+      label: 'Mean CV%',
+      data: cvVals,
+      backgroundColor: cvVals.map(v => v<1?'#639922':v<2?'#EF9F27':'#E24B4A'),
+      borderRadius: 4
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend:{display:false}, tooltip:{callbacks:{label:ctx=>`CV: ${ctx.raw.toFixed(3)}%`}} },
+    scales: {
+      x: { ticks:{color:tc,font:tf}, grid:{display:false} },
+      y: { ticks:{color:tc,font:tf,callback:v=>v.toFixed(2)+'%'}, grid:{color:gc}, title:{display:true,text:'CV%',color:tc,font:{size:10}} }
+    }
+  }
+});
+
+// ─── CHART: REP RANGE SCATTER ────────────────────────────────────────────────
+const rangeData = DATA.map((d,i) => {
+  if (d.r1==null||d.r2==null||d.r3==null) return {x:i+1,y:null};
+  return {x:i+1, y: Math.max(d.r1,d.r2,d.r3)-Math.min(d.r1,d.r2,d.r3)};
+}).filter(p=>p.y!==null);
+new Chart(document.getElementById('rangeChart'), {
+  type: 'scatter',
+  data: { datasets: [{
+    label: 'Rep spread (mm)',
+    data: rangeData,
+    backgroundColor: rangeData.map(p=>p.y>1.5?'#E24B4A':p.y>0.8?'#EF9F27':'#378ADD'),
+    pointRadius: 5, pointHoverRadius: 7
+  }]},
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend:{display:false}, tooltip:{callbacks:{label:ctx=>`${DATA[ctx.dataIndex].id}: ${ctx.raw.y.toFixed(1)} mm spread`}}},
+    scales: {
+      x: { title:{display:true,text:'Test sequence',color:tc,font:{size:10}}, ticks:{color:tc,font:tf}, grid:{color:gc} },
+      y: { title:{display:true,text:'Range (mm)',color:tc,font:{size:10}}, ticks:{color:tc,font:tf}, grid:{color:gc} }
+    }
+  }
+});
+
+// ─── TABLE: HIGH-VARIABILITY TESTS ──────────────────────────────────────────
+const repBody = document.getElementById('rep-table-body');
+DATA.filter(d => {
+  if (d.r1==null||d.r2==null||d.r3==null) return true;
+  return (Math.max(d.r1,d.r2,d.r3)-Math.min(d.r1,d.r2,d.r3)) > 1.5;
+}).forEach(d => {
+  const spread = d.r1&&d.r2&&d.r3 ? (Math.max(d.r1,d.r2,d.r3)-Math.min(d.r1,d.r2,d.r3)).toFixed(1) : 'N/A';
+  const cvVal = cv(d.r1,d.r2,d.r3);
+  const cvStr = cvVal !== null ? cvVal.toFixed(2)+'%' : 'N/A';
+  const cvClass = cvVal===null?'cv-high':cvVal<1?'cv-low':cvVal<2?'cv-mid':'cv-high';
+  const rBadge = d.result==='PASS'?'badge-green':d.result==='FAIL'?'badge-red':'badge-amber';
+  repBody.innerHTML += `<tr>
+    <td class="mono">${d.id}</td><td>${d.mat}</td><td>${d.op}</td>
+    <td class="mono">${d.r1??'—'}</td><td class="mono">${d.r2??'—'}</td><td class="mono">${d.r3??'—'}</td>
+    <td class="mono">${spread}</td>
+    <td><span class="cv-pill ${cvClass}">${cvStr}</span></td>
+    <td><span class="badge ${rBadge}">${d.result}</span></td>
+  </tr>`;
+});
+
+// ─── TIMELINE ────────────────────────────────────────────────────────────────
+const tlContainer = document.getElementById('timeline-container');
+const byOp = {}, byDate = {};
+DATA.forEach(d => {
+  if (!byOp[d.op]) byOp[d.op] = [];
+  byOp[d.op].push(d);
+  if (!byDate[d.date]) byDate[d.date] = [];
+  byDate[d.date].push(d);
+});
+['OPR-A','OPR-B','OPR-C','OPR-D'].forEach(op => {
+  const row = document.createElement('div');
+  row.className = 'timeline-row';
+  const lbl = document.createElement('div');
+  lbl.className = 'timeline-label';
+  lbl.textContent = op;
+  row.appendChild(lbl);
+  const dots = document.createElement('div');
+  dots.className = 'timeline-dots';
+  (byOp[op]||[]).forEach(d => {
+    const dot = document.createElement('div');
+    const cls = d.result==='PASS'?'tl-pass':d.result==='FAIL'?'tl-fail':'tl-invalid';
+    dot.className = `tl-dot ${cls}`;
+    dot.title = `${d.id} · ${d.mat} · ${d.result} · ${d.date}`;
+    dot.textContent = d.result[0];
+    dots.appendChild(dot);
+  });
+  row.appendChild(dots);
+  tlContainer.appendChild(row);
+});
+
+// ─── CHART: OPERATOR PROFILE (tests vs flags) ────────────────────────────────
+new Chart(document.getElementById('oprProfileChart'), {
+  type: 'bar',
+  data: {
+    labels: ['OPR-A','OPR-B','OPR-C','OPR-D'],
+    datasets: [
+      { label: 'Tests run', data: [15,12,13,10], backgroundColor: 'rgba(55,138,221,0.6)', borderRadius: 3 },
+      { label: 'Flagged records', data: [2,5,2,2], backgroundColor: '#E24B4A', borderRadius: 3 }
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend:{display:false} },
+    scales: {
+      x: { ticks:{color:tc,font:tf}, grid:{color:gc} },
+      y: { ticks:{color:tc,font:tf,stepSize:2}, grid:{color:gc} }
+    }
+  }
+});
+
+// ─── CHART: OPERATOR AVG |ΔTEMP| ─────────────────────────────────────────────
+const oprTempAvg = {};
+DATA.forEach(d => {
+  if (!oprTempAvg[d.op]) oprTempAvg[d.op] = [];
+  oprTempAvg[d.op].push(Math.abs(d.tDev));
+});
+const oprLabels2 = ['OPR-A','OPR-B','OPR-C','OPR-D'];
+const oprTempVals = oprLabels2.map(o => {
+  const v = oprTempAvg[o]||[];
+  return +(v.reduce((a,b)=>a+b,0)/v.length).toFixed(3);
+});
+new Chart(document.getElementById('oprTempChart'), {
+  type: 'bar',
+  data: {
+    labels: oprLabels2,
+    datasets: [{
+      label: 'Avg |ΔTemp| °C',
+      data: oprTempVals,
+      backgroundColor: oprTempVals.map(v=>v>0.3?'#E24B4A':v>0.1?'#EF9F27':'#639922'),
+      borderRadius: 4
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend:{display:false}, tooltip:{callbacks:{label:ctx=>`${ctx.raw.toFixed(3)} °C avg deviation`}} },
+    scales: {
+      x: { ticks:{color:tc,font:tf}, grid:{display:false} },
+      y: { ticks:{color:tc,font:tf}, grid:{color:gc}, title:{display:true,text:'°C',color:tc,font:{size:10}} }
+    }
+  }
+});
+
+// ─── CHART: SPEC MARGIN ──────────────────────────────────────────────────────
+const marginData = DATA.map((d,i) => {
+  const distLow = d.mean - d.sMin;
+  const distHigh = d.sMax - d.mean;
+  const margin = Math.min(distLow, distHigh);
+  return {x: i+1, y: margin, d};
+});
+new Chart(document.getElementById('marginChart'), {
+  type: 'scatter',
+  data: { datasets: [{
+    label: 'Distance to spec limit',
+    data: marginData.map(p=>({x:p.x,y:p.y})),
+    backgroundColor: marginData.map(p => p.y<0?'#8B0000':p.y<3?'#E24B4A':p.y<10?'#EF9F27':'#639922'),
+    pointRadius: 5, pointHoverRadius: 7
+  }]},
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend:{display:false}, tooltip:{callbacks:{label:ctx=>{const d=marginData[ctx.dataIndex].d; return `${d.id}: ${ctx.raw.y.toFixed(1)} mm to limit`;}}}},
+    scales: {
+      x: { title:{display:true,text:'Test sequence',color:tc,font:{size:10}}, ticks:{color:tc,font:tf}, grid:{color:gc} },
+      y: { title:{display:true,text:'Margin (mm)',color:tc,font:{size:10}}, ticks:{color:tc,font:tf}, grid:{color:gc} }
+    }
+  }
+});
+
+
+// ─── TABLE: TESTS NEAR SPEC LIMIT ───────────────────────────────────────────
+const nearBody = document.getElementById('near-limit-body');
+DATA.filter(d => {
+  if (d.result !== 'PASS') return false;
+  const distLow = d.mean - d.sMin;
+  const distHigh = d.sMax - d.mean;
+  return Math.min(distLow,distHigh) < 5;
+}).sort((a,b) => {
+  const mA = Math.min(a.mean-a.sMin, a.sMax-a.mean);
+  const mB = Math.min(b.mean-b.sMin, b.sMax-b.mean);
+  return mA - mB;
+}).forEach(d => {
+  const distLow = d.mean - d.sMin;
+  const distHigh = d.sMax - d.mean;
+  const margin = Math.min(distLow,distHigh);
+  const limitLabel = distLow < distHigh ? `Min ${d.sMin}` : `Max ${d.sMax}`;
+  const cls = margin < 2 ? 'badge-red' : margin < 3.5 ? 'badge-amber' : 'badge-gray';
+  nearBody.innerHTML += `<tr>
+    <td class="mono">${d.id}</td><td>${d.mat}</td>
+    <td class="mono">${d.mean.toFixed(2)}</td>
+    <td>${limitLabel}</td>
+    <td><span class="badge ${cls}">${margin.toFixed(1)} mm</span></td>
+  </tr>`;
+});
+
+// ─── HEATMAP (original) ──────────────────────────────────────────────────────
+const hmData = [
+  {id:'PNR-003',batch:'ok',  probe:'ok',  temp:'fail',reps:'ok',  method:'ok',  result:'fail'},
+  {id:'PNR-015',batch:'fail',probe:'ok',  temp:'ok',  reps:'ok',  method:'ok',  result:'ok'  },
+  {id:'PNR-017',batch:'ok',  probe:'fail',temp:'ok',  reps:'ok',  method:'ok',  result:'fail'},
+  {id:'PNR-020',batch:'ok',  probe:'ok',  temp:'warn',reps:'ok',  method:'ok',  result:'fail'},
+  {id:'PNR-028',batch:'fail',probe:'ok',  temp:'ok',  reps:'fail',method:'ok',  result:'warn'},
+  {id:'PNR-030',batch:'ok',  probe:'ok',  temp:'fail',reps:'ok',  method:'ok',  result:'fail'},
+  {id:'PNR-033',batch:'ok',  probe:'ok',  temp:'warn',reps:'ok',  method:'ok',  result:'ok'  },
+  {id:'PNR-037',batch:'ok',  probe:'fail',temp:'ok',  reps:'ok',  method:'ok',  result:'warn'},
+  {id:'PNR-043',batch:'fail',probe:'ok',  temp:'ok',  reps:'ok',  method:'ok',  result:'fail'},
+];
+const cc = {ok:'hm-ok',warn:'hm-warn',fail:'hm-fail'};
+const ct = {ok:'OK',warn:'WARN',fail:'FAIL'};
+const flds = ['batch','probe','temp','reps','method','result'];
+const wrap = document.getElementById('heatmap-rows');
+hmData.forEach(row => {
+  const g = document.createElement('div');
+  g.className = 'heatmap-grid';
+  g.style.marginBottom = '3px';
+  const lbl = document.createElement('div');
+  lbl.className = 'hm-label';
+  lbl.textContent = row.id;
+  g.appendChild(lbl);
+  flds.forEach(f => {
+    const c = document.createElement('div');
+    c.className = 'hm-cell ' + cc[row[f]];
+    c.textContent = ct[row[f]];
+    g.appendChild(c);
+  });
+  wrap.appendChild(g);
+});
+</script>
+</body>
+</html>
